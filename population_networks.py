@@ -21,7 +21,7 @@ network_types = {
 }
 
 
-def get_network(network_type, args=None):
+def get_network(network_type, args):
     arg_parser = argparse.ArgumentParser(description=f'{network_type} network arguments', prog='population_network.py')
 
     network_constructor, network_args = network_types[network_type]
