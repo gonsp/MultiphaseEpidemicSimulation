@@ -32,13 +32,16 @@ def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, 
             states[new_state] += 1
             graph.nodes[node]['state'] = new_state
             graph.nodes[node]['time_to_move'] = {'S' : math.inf, 'I_a' : t_a, 'I_s' : t_s, 'I_q' : t_q, 'D' : math.inf}[new_state]
-            if prev_state == 'I_q':
+            if new_state in ['S', 'D']:
                 I.remove(node)
+            if new_state in ['I_a']:
+                I.add(node)
 
     update_states({node : 'I_a' for node in I})    
     update_states_hist()
 
     for t in range(T):
+        print(f'{round(t / T * 100, 2)}%', end="\r")
         nodes_to_new_states = {}
         for node in I:
             state = graph.nodes[node]['state']
@@ -49,13 +52,16 @@ def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, 
                         nodes_to_new_states[neighbor] = 'I_a'
 
             graph.nodes[node]['time_to_move'] -= 1
-            if graph.nodes[node]['time_to_move'] == 0:
+            if graph.nodes[node]['time_to_move'] <= 0:
                 if state == 'I_a':
                     nodes_to_new_states[node] = 'I_s'
                 elif state == 'I_s':
-                    nodes_to_new_states[node] = random.choices(['I_q', 'D'], weights=[1 - gamma, gamma])
+                    nodes_to_new_states[node] = random.choices(['I_q', 'D'], weights=[1 - gamma, gamma])[0]
                 else:
                     nodes_to_new_states[node] = 'S'
+        update_states(nodes_to_new_states)
+        update_states_hist()
+        plot.add_frame(graph, states_hist)
 
     return states_hist
 
