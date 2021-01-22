@@ -1,5 +1,7 @@
 import os
 import networkx as nx
+import subprocess
+import platform
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
@@ -127,10 +129,20 @@ class AnimatedPlot():
         self.frames.append([states_hist_axes, new_cases_axes, network_axes])
 
 
-    def show(self):
+    def show(self, name='', duration=5):
         anim = animation.ArtistAnimation(self.fig, self.frames, interval=100, blit=False, repeat_delay=10000)
-        plt.show()
+        if not os.path.exists('plots/'):
+            os.makedirs('plots/')
 
+        file_path = f'plots/animation_{name}.mp4'
+        anim.save(file_path, fps=self.T/duration)
+
+        if platform.system() == 'Darwin':       # macOS
+            subprocess.call(('open', file_path))
+        elif platform.system() == 'Windows':    # Windows
+            os.startfile(file_path)
+        else:                                   # linux variants
+            subprocess.call(('xdg-open', file_path))
 
 
     

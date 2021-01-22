@@ -13,7 +13,7 @@ import population_networks
 import visualization
 
 
-def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, T, plot_animation=False, **_):
+def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, T, plot_animation=False, simulation_name='', **_):
     nx.set_node_attributes(graph, 'S', 'state')
     nx.set_node_attributes(graph, math.inf, 'time_to_move')
 
@@ -71,7 +71,7 @@ def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, 
             plot.add_frame(graph, states_hist)
 
     if plot_animation:
-        plot.show()
+        plot.show(simulation_name)
     return states_hist
 
 
@@ -97,12 +97,13 @@ def main():
     random.seed(args.seed)
     np.random.seed(args.seed)
 
+    simulation_name = '_'.join(sys.argv[1:])
+
     graph = population_networks.get_network(args.network, network_args)
 
-    states_hist = simulate_multiphase_epidemic(graph, **vars(args))
+    states_hist = simulate_multiphase_epidemic(graph, simulation_name=simulation_name, **vars(args))
 
-    reference = '_'.join(sys.argv[1:])
-    visualization.plot_states_hist(states_hist, name=reference)
-    visualization.plot_new_cases(states_hist, name=reference)
+    visualization.plot_states_hist(states_hist, name=simulation_name)
+    visualization.plot_new_cases(states_hist, name=simulation_name)
 
 main()
