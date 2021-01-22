@@ -1,3 +1,4 @@
+import sys
 import argparse
 import random
 import math
@@ -9,9 +10,10 @@ import matplotlib
 matplotlib.use('MacOSX')
 
 import population_networks
+import visualization
 
 
-def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, T, video_animation=False, **_):
+def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, T, plot_animation=False, **_):
     nx.set_node_attributes(graph, 'S', 'state')
     nx.set_node_attributes(graph, math.inf, 'time_to_move')
 
@@ -40,6 +42,10 @@ def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, 
     update_states({node : 'I_a' for node in I})    
     update_states_hist()
 
+    if plot_animation:
+        plot = visualization.AnimatedPlot(T, pagerank=False)
+        plot.add_frame(graph, states_hist)
+
     for t in range(T):
         print(f'{round(t / T * 100, 2)}%', end="\r")
         nodes_to_new_states = {}
@@ -61,8 +67,11 @@ def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, 
                     nodes_to_new_states[node] = 'S'
         update_states(nodes_to_new_states)
         update_states_hist()
-        plot.add_frame(graph, states_hist)
+        if plot_animation:
+            plot.add_frame(graph, states_hist)
 
+    if plot_animation:
+        plot.show()
     return states_hist
 
 
@@ -82,7 +91,7 @@ def main():
     arg_parser.add_argument('-t_q', help='time while in quarentine', type=int, required=True)
     arg_parser.add_argument('-T', help='total time of the simulation', type=int, default=10**5)
     arg_parser.add_argument('-seed', help='random seed', type=int, default=random.randint(0, 1000))
-    arg_parser.add_argument('-show', help='show plot', action='store_true')
+    arg_parser.add_argument('-plot_animation', help='plot_animation', action='store_true')
     args, network_args = arg_parser.parse_known_args()
     
     random.seed(args.seed)
@@ -90,6 +99,10 @@ def main():
 
     graph = population_networks.get_network(args.network, network_args)
 
-    simulate_multiphase_epidemic(graph, **vars(args))
+    states_hist = simulate_multiphase_epidemic(graph, **vars(args))
+
+    reference = '_'.join(sys.argv[1:])
+    visualization.plot_states_hist(states_hist, name=reference)
+    visualization.plot_new_cases(states_hist, name=reference)
 
 main()
