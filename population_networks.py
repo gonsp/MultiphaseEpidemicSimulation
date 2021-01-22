@@ -3,6 +3,8 @@ import pickle
 import argparse
 import networkx as nx
 
+import visualization
+
 
 network_types = {
     'complete' : (
@@ -43,4 +45,5 @@ def get_network(network_type, args):
         with open(file_name, 'wb') as file:
             pickle.dump(network, file)
 
+    visualization.draw_network(network, without_states=True)
     return network

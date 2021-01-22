@@ -17,35 +17,41 @@ def save_plot(fig, name):
     fig.savefig(f'plots/{name}.png', dpi=fig.dpi)
 
 
-def draw_network(graph, pos=None, pagerank=False, axes=None):
+def draw_network(graph, pos=None, pagerank=False, without_states=False, axes=None):
     show = axes is None
     if axes is None:
         axes = plt.axes()
 
     if pos is None:
-        pos = nx.kamada_kawai_layout(graph)
+        pos = nx.random_layout(graph)
 
-    default_node_size = 20
+    default_node_size = 10000 / (100 + len(graph)) + 1
+    print(default_node_size)
 
     if pagerank:
         weights = nx.pagerank(graph, alpha=0.85)
 
-    legend_items = []
-    for state, color in state_to_color:
-        nodes = [node for node, attributes in graph.nodes(data=True) if attributes['state'] == state]
-        if pagerank:
-            node_size = [weights[node] * (default_node_size *  len(graph)) for node in nodes]
-        else:
-            node_size = default_node_size
+    if without_states:
+        nx.draw_networkx_nodes(graph, pos, nodelist=graph.nodes, node_size=default_node_size, ax=axes)
+    else:
+        legend_items = []
+        for state, color in state_to_color:
+            nodes = [node for node, attributes in graph.nodes(data=True) if attributes['state'] == state]
+            if pagerank:
+                node_size = [weights[node] * (default_node_size *  len(graph)) for node in nodes]
+            else:
+                node_size = default_node_size
 
-        legend_items.append(Line2D([0], [0], marker='o', color='w', label=state, markerfacecolor=color, markersize=8))
-        nx.draw_networkx_nodes(graph, pos, nodelist=nodes, node_size=node_size, node_color=color, label=state, ax=axes)
+            legend_items.append(Line2D([0], [0], label=state, markerfacecolor=color, markersize=8, marker='o', color=(1, 1, 1, 0)))
+            nx.draw_networkx_nodes(graph, pos, nodelist=nodes, node_size=node_size, node_color=color, label=state, ax=axes)
+        plt.legend(handles=legend_items)
 
     nx.draw_networkx_edges(graph, pos, width=0.3, ax=axes)
-    plt.legend(handles=legend_items)
 
     if show:
         plt.show()
+
+    return pos
 
 
 def plot_states_hist(states_hist, T=None, axes=None, name='plot'):
@@ -104,7 +110,7 @@ def plot_new_cases(states_hist, T=None, states=['I_a', 'D'], axes=None, name='pl
 class AnimatedPlot():
 
     def __init__(self, T, pagerank=False):
-        self.fig = plt.figure(figsize=(8, 6), dpi=120)
+        self.fig = plt.figure(figsize=(8, 6), dpi=200)
         self.gs = gridspec.GridSpec(2, 2)
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
 
@@ -122,9 +128,7 @@ class AnimatedPlot():
         plot_new_cases(states_hist, self.T, axes=new_cases_axes)
 
         network_axes = self.fig.add_subplot(self.gs[1, :], label=len(self.frames))
-        if self.network_layout is None:
-            self.network_layout = nx.kamada_kawai_layout(graph)
-        draw_network(graph, pos=self.network_layout, axes=network_axes)
+        self.network_layout = draw_network(graph, pos=self.network_layout, axes=network_axes)
 
         self.frames.append([states_hist_axes, new_cases_axes, network_axes])
 
@@ -137,12 +141,12 @@ class AnimatedPlot():
         file_path = f'plots/animation_{name}.mp4'
         anim.save(file_path, fps=self.T/duration)
 
-        if platform.system() == 'Darwin':       # macOS
-            subprocess.call(('open', file_path))
-        elif platform.system() == 'Windows':    # Windows
-            os.startfile(file_path)
-        else:                                   # linux variants
-            subprocess.call(('xdg-open', file_path))
+        # if platform.system() == 'Darwin':       # macOS
+        #     subprocess.call(('open', file_path))
+        # elif platform.system() == 'Windows':    # Windows
+        #     os.startfile(file_path)
+        # else:                                   # linux variants
+        #     subprocess.call(('xdg-open', file_path))
 
 
     
