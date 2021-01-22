@@ -1,4 +1,3 @@
-import os
 import networkx as nx
 import subprocess
 import platform
@@ -11,23 +10,19 @@ from matplotlib.lines import Line2D
 state_to_color = [('S', 'forestgreen'), ('I_a', 'red'), ('I_s', 'darkred'), ('I_q', 'yellow'), ('D', 'black')]
 
 
-def save_plot(fig, name):
-    if not os.path.exists('plots/'):
-        os.makedirs('plots/')
-    fig.savefig(f'plots/{name}.png', dpi=fig.dpi)
-
-
 def draw_network(graph, pos=None, pagerank=False, without_states=False, axes=None):
     show = axes is None
     if axes is None:
         axes = plt.axes()
 
     if pos is None:
-        pos = nx.random_layout(graph)
+        if all('pos' in graph.nodes[node] for node in graph.nodes()):
+            pos = {node : graph.nodes[node]['pos'] for node in graph.nodes()}
+        else:
+            pos = nx.random_layout(graph)
 
     default_node_size = 10000 / (100 + len(graph)) + 1
-    print(default_node_size)
-
+    
     if pagerank:
         weights = nx.pagerank(graph, alpha=0.85)
 
@@ -54,7 +49,7 @@ def draw_network(graph, pos=None, pagerank=False, without_states=False, axes=Non
     return pos
 
 
-def plot_states_hist(states_hist, T=None, axes=None, name='plot'):
+def plot_states_hist(states_hist, T=None, axes=None, simulation_name=''):
     show = axes is None
     if axes is None:
         fig = plt.figure(dpi=120)
@@ -75,11 +70,12 @@ def plot_states_hist(states_hist, T=None, axes=None, name='plot'):
     plt.legend()
 
     if show:
-        save_plot(fig, 'states_hist_' + name)
+        if simulation_name != '':
+            fig.savefig(f'plots/{simulation_name}/states_hist.png', dpi=fig.dpi)
         plt.show()
 
 
-def plot_new_cases(states_hist, T=None, states=['I_a', 'D'], axes=None, name='plot'):
+def plot_new_cases(states_hist, T=None, states=['I_a', 'D'], axes=None, simulation_name=''):
     show = axes is None
     if axes is None:
         fig = plt.figure(dpi=120)
@@ -103,7 +99,8 @@ def plot_new_cases(states_hist, T=None, states=['I_a', 'D'], axes=None, name='pl
     plt.legend()
 
     if show:
-        save_plot(fig, 'new_cases_' + name)
+        if simulation_name != '':
+            fig.savefig(f'plots/{simulation_name}/new_cases.png', dpi=fig.dpi)
         plt.show()
 
 
@@ -133,20 +130,24 @@ class AnimatedPlot():
         self.frames.append([states_hist_axes, new_cases_axes, network_axes])
 
 
-    def show(self, name='', duration=5):
+    def show(self, simulation_name='', duration=5):
+        print('Generating animated plot')
         anim = animation.ArtistAnimation(self.fig, self.frames, interval=100, blit=False, repeat_delay=10000)
-        if not os.path.exists('plots/'):
-            os.makedirs('plots/')
 
-        file_path = f'plots/animation_{name}.mp4'
-        anim.save(file_path, fps=self.T/duration)
+        if simulation_name != '':
+            file_path = f'plots/{simulation_name}/animation.mp4'
+            print('Saving animation in:', file_path)
 
-        # if platform.system() == 'Darwin':       # macOS
-        #     subprocess.call(('open', file_path))
-        # elif platform.system() == 'Windows':    # Windows
-        #     os.startfile(file_path)
-        # else:                                   # linux variants
-        #     subprocess.call(('xdg-open', file_path))
+            anim.save(file_path, fps=self.T/duration)
+
+            # if platform.system() == 'Darwin':       # macOS
+            #     subprocess.call(('open', file_path))
+            # elif platform.system() == 'Windows':    # Windows
+            #     os.startfile(file_path)
+            # else:                                   # linux variants
+            #     subprocess.call(('xdg-open', file_path))
+        else:
+            plt.show()
 
 
     

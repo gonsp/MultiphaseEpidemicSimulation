@@ -1,4 +1,5 @@
 import sys
+import os
 import argparse
 import random
 import math
@@ -46,6 +47,7 @@ def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, 
         plot = visualization.AnimatedPlot(T, pagerank=False)
         plot.add_frame(graph, states_hist)
 
+    print('Simulation epidemic')
     for t in range(T):
         print(f'{round(t / T * 100, 2)}%', end="\r")
         nodes_to_new_states = {}
@@ -70,6 +72,8 @@ def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, 
         if plot_animation:
             plot.add_frame(graph, states_hist)
 
+    print('Done')
+
     if plot_animation:
         plot.show(simulation_name)
     return states_hist
@@ -92,18 +96,26 @@ def main():
     arg_parser.add_argument('-T', help='total time of the simulation', type=int, default=10**5)
     arg_parser.add_argument('-seed', help='random seed', type=int, default=random.randint(0, 1000))
     arg_parser.add_argument('-plot_animation', help='plot_animation', action='store_true')
+    arg_parser.add_argument('-save_plots', help='save plots', action='store_true')
     args, network_args = arg_parser.parse_known_args()
     
     random.seed(args.seed)
     np.random.seed(args.seed)
 
-    simulation_name = '_'.join(sys.argv[1:])
+    simulation_name = ''
+    if args.save_plots:
+        simulation_name = '_'.join([arg for arg in sys.argv[1:] if arg not in ['-plot_animation', '-save_plots']])
+        if not os.path.exists('plots/'):
+            os.makedirs('plots/')
+        if not os.path.exists('plots/' + simulation_name):
+            os.makedirs('plots/' + simulation_name)
+
 
     graph = population_networks.get_network(args.network, network_args)
 
     states_hist = simulate_multiphase_epidemic(graph, simulation_name=simulation_name, **vars(args))
 
-    visualization.plot_states_hist(states_hist, name=simulation_name)
-    visualization.plot_new_cases(states_hist, name=simulation_name)
+    visualization.plot_states_hist(states_hist, simulation_name=simulation_name)
+    visualization.plot_new_cases(states_hist, simulation_name=simulation_name)
 
 main()

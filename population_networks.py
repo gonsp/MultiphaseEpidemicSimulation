@@ -6,6 +6,10 @@ import networkx as nx
 import visualization
 
 
+def create_real_population_network_model(target_population):
+    geographical_threshold_graph
+
+
 network_types = {
     'complete' : (
         nx.complete_graph, 
@@ -20,6 +24,13 @@ network_types = {
             'p' : {'help' : 'p', 'type' : float, 'required' : True}
         }
     ),
+    'geo_graph' : (
+        nx.geographical_threshold_graph,
+        {
+            'n' : {'help' : 'n', 'type' : int, 'required' : True},
+            'theta' : {'help' : 'threshold', 'type' : float, 'required' : True},
+        }
+    )
 }
 
 
@@ -39,11 +50,13 @@ def get_network(network_type, args):
         with open(file_name, 'rb') as file:
             network = pickle.load(file)
     else:
+        print('Creating network')
         network = network_constructor(**vars(args))
         if not os.path.exists('networks'):
             os.makedirs('networks')
         with open(file_name, 'wb') as file:
             pickle.dump(network, file)
 
-    visualization.draw_network(network, without_states=True)
+    # visualization.draw_network(network, without_states=True)
+    print('Done')
     return network
