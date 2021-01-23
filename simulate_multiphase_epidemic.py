@@ -55,8 +55,9 @@ def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, 
             state = graph.nodes[node]['state']
             infection_probability = {'I_a' : beta, 'I_s' : beta / alpha, 'I_q' : 0}[state]
             if infection_probability != 0:
-                for neighbor in graph[node]:
-                    if graph.nodes[neighbor]['state'] == 'S' and random.random() < infection_probability:
+                for neighbor, edge_attr in graph[node].items():
+                    weight = edge_attr.get('weight', 1)
+                    if graph.nodes[neighbor]['state'] == 'S' and random.random() < 1 - (1 - infection_probability) ** weight:
                         nodes_to_new_states[neighbor] = 'I_a'
 
             graph.nodes[node]['time_to_move'] -= 1
@@ -80,7 +81,7 @@ def simulate_multiphase_epidemic(graph, beta, alpha, gamma, p_0, t_a, t_s, t_q, 
 
 
 # Usage example: 
-# python simulate_multiphase_epidemic.py -model SIS -network complete
+# python simulate_multiphase_epidemic.py -p_0 0.001 -beta 0.1 -alpha 2 -gamma 0.001 -t_a 5 -t_s 3 -t_q 1000 -network geo_graph -n 1000 -theta 1000 -T 300 -seed 1 -plot_animation -save_plots
 def main():
     arg_parser = argparse.ArgumentParser(description='Epidemiological simulation of covid-inspired SI/SIS model', allow_abbrev=False)
     arg_parser._get_option_tuples = lambda _: [] # To fix a bug in argparse 3.8.x that ignores allow_abbrev
@@ -117,5 +118,6 @@ def main():
 
     visualization.plot_states_hist(states_hist, simulation_name=simulation_name)
     visualization.plot_new_cases(states_hist, simulation_name=simulation_name)
+    visualization.draw_network(graph, simulation_name=simulation_name)
 
 main()

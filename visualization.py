@@ -1,6 +1,7 @@
 import networkx as nx
 import subprocess
 import platform
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
@@ -10,18 +11,19 @@ from matplotlib.lines import Line2D
 state_to_color = [('S', 'forestgreen'), ('I_a', 'red'), ('I_s', 'darkred'), ('I_q', 'yellow'), ('D', 'black')]
 
 
-def draw_network(graph, pos=None, pagerank=False, without_states=False, axes=None):
+def draw_network(graph, pos=None, pagerank=False, without_states=False, axes=None, simulation_name=''):
     show = axes is None
     if axes is None:
+        fig = plt.figure(dpi=120)
         axes = plt.axes()
 
     if pos is None:
         if all('pos' in graph.nodes[node] for node in graph.nodes()):
-            pos = {node : graph.nodes[node]['pos'] for node in graph.nodes()}
+            pos = nx.get_node_attributes(graph, 'pos')
         else:
             pos = nx.random_layout(graph)
 
-    default_node_size = 10000 / (100 + len(graph)) + 1
+    default_node_size = 10000 / (150 + len(graph)) + 1
     
     if pagerank:
         weights = nx.pagerank(graph, alpha=0.85)
@@ -44,6 +46,8 @@ def draw_network(graph, pos=None, pagerank=False, without_states=False, axes=Non
     nx.draw_networkx_edges(graph, pos, width=0.3, ax=axes)
 
     if show:
+        if simulation_name != '':
+            fig.savefig(f'plots/{simulation_name}/network.png', dpi=fig.dpi)
         plt.show()
 
     return pos
@@ -88,8 +92,8 @@ def plot_new_cases(states_hist, T=None, states=['I_a', 'D'], axes=None, simulati
         if state in states:
             hist = states_hist[state]
             new_cases = [max(0, hist[i] - hist[i-1]) for i in range(len(hist))]
+            new_cases = np.convolve(new_cases, np.ones(20), 'same')
             axes.plot(new_cases, label=state, color=color, linewidth=1)
-            # axes.set_ylim(bottom=0, top=n + 5)
             axes.set_xlim(left=0)
             if T is not None:
                 axes.set_xlim(right=T)
