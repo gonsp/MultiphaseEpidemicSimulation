@@ -119,5 +119,6 @@ def main():
     visualization.plot_states_hist(states_hist, simulation_name=simulation_name)
     visualization.plot_new_cases(states_hist, simulation_name=simulation_name)
     visualization.draw_network(graph, simulation_name=simulation_name)
+    visualization.plot_degree_dist(graph, simulation_name=simulation_name)
 
 main()

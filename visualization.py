@@ -53,6 +53,22 @@ def draw_network(graph, pos=None, pagerank=False, without_states=False, axes=Non
     return pos
 
 
+def plot_degree_dist(graph, simulation_name=''):
+    fig = plt.figure(dpi=120)
+
+    degree_to_count = {}
+    for degree in [graph.degree(node) for node in graph.nodes()]:
+        degree_to_count[degree] = degree_to_count.get(degree, 0) + 1
+    degrees, counts = list(zip(*sorted(degree_to_count.items())))
+
+    plt.plot(degrees, counts, linewidth=1)
+    plt.xlabel('degree')
+    plt.ylabel('count')
+    if simulation_name != '':
+        fig.savefig(f'plots/{simulation_name}/degree_distribution.png', dpi=fig.dpi)
+    plt.show()
+
+
 def plot_states_hist(states_hist, T=None, axes=None, simulation_name=''):
     show = axes is None
     if axes is None:
